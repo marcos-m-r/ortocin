@@ -25,41 +25,55 @@
               <v-card>
                 <v-card-title>
                   <span class="headline">
-                    <v-icon big>mdi-face</v-icon>
-                    <span class="patient-icon-text">Cadastrar Paciente</span>
+                    <v-icon big color="primary">mdi-face</v-icon>
+                    <span v-if="!editing" class="patient-icon-text">Cadastrar Paciente</span>
+                    <span v-else class="patient-icon-text">Paciente</span>
                   </span>
                 </v-card-title>
                 <v-card-text>
-                  <v-progress-linear v-if="showSaveLoading" indeterminate color="primary"></v-progress-linear>
-                  <v-alert v-if="success" type="success">{{ this.successMessage }}</v-alert>
-                  <v-alert v-if="error" type="error">{{ this.errorMessage }}</v-alert>
-                  <v-container>
-                    <v-row>
-                      <v-col cols="12">
-                        <v-text-field label="Nome Completo" v-model="editingPatient.name" required></v-text-field>
-                      </v-col>
-                      <v-col cols="12">
-                        <v-text-field label="CPF" v-model="editingPatient.cpf" required></v-text-field>
-                      </v-col>
-                      <v-col cols="12">
-                        <v-text-field
-                          label="Data de Nascimento"
-                          v-model="editingPatient.birth"
-                          required
-                        ></v-text-field>
-                      </v-col>
-                      <v-col cols="12">
-                        <v-text-field label="Telefone" v-model="editingPatient.phone" required></v-text-field>
-                      </v-col>
-                      <v-col cols="12">
-                        <v-text-field
-                          label="Indicado Por"
-                          v-model="editingPatient.appointed_by"
-                          required
-                        ></v-text-field>
-                      </v-col>
-                    </v-row>
-                  </v-container>
+                  <v-tabs v-model="patientTabs">
+                    <v-tab>Cadastro</v-tab>
+                    <v-tab>Ficha de Evolução</v-tab>
+                  </v-tabs>
+                  <v-tabs-items v-model="patientTabs">
+                    <v-tab-item>
+                      <v-container>
+                        <v-progress-linear v-if="showSaveLoading" indeterminate color="primary"></v-progress-linear>
+                        <v-alert v-if="success" type="success">{{ successMessage }}</v-alert>
+                        <v-alert v-if="error" type="error">{{ errorMessage }}</v-alert>
+                        <v-row>
+                          <v-col cols="12">
+                            <v-text-field
+                              label="Nome Completo"
+                              v-model="editingPatient.name"
+                              required
+                            ></v-text-field>
+                          </v-col>
+                          <v-col cols="12">
+                            <v-text-field label="CPF" v-model="editingPatient.cpf" required></v-text-field>
+                          </v-col>
+                          <v-col cols="12">
+                            <v-text-field
+                              label="Data de Nascimento"
+                              v-model="editingPatient.birth"
+                              required
+                            ></v-text-field>
+                          </v-col>
+                          <v-col cols="12">
+                            <v-text-field label="Telefone" v-model="editingPatient.phone" required></v-text-field>
+                          </v-col>
+                          <v-col cols="12">
+                            <v-text-field
+                              label="Indicado Por"
+                              v-model="editingPatient.appointed_by"
+                              required
+                            ></v-text-field>
+                          </v-col>
+                        </v-row>
+                      </v-container>
+                    </v-tab-item>
+                    <v-tab-item></v-tab-item>
+                  </v-tabs-items>
                 </v-card-text>
                 <v-card-actions>
                   <v-spacer></v-spacer>
@@ -98,6 +112,7 @@ export default {
   name: "patients-index",
   data() {
     return {
+      patientTabs: null,
       dialog: false,
       patients: [],
       search: "",
