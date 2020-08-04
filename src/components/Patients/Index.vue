@@ -33,7 +33,7 @@
                 <v-card-text>
                   <v-tabs v-model="patientTabs">
                     <v-tab>Cadastro</v-tab>
-                    <v-tab>Ficha de Evolução</v-tab>
+                    <v-tab :disabled="!editing">Ficha de Evolução</v-tab>
                   </v-tabs>
                   <v-tabs-items v-model="patientTabs">
                     <v-tab-item>
@@ -289,5 +289,9 @@ export default {
 <style scoped>
 .patient-icon-text {
   padding-left: 5px;
+}
+
+.headline {
+  color: #BA68C8 !important;
 }
 </style>
