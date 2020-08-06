@@ -16,9 +16,13 @@
             <v-spacer></v-spacer>
 
             <patient-dialog
+              ref="patiengDialog"
               :patient="editingPatient"
               :patients="patients"
-              @push:patient="pushPatient"
+              :editing="editing"
+              @add:patient="addPatient"
+              @edit:patient="editPatient"
+              @set:editing-patient="setEditingPatient"
             />
           </v-card-title>
           <v-data-table
@@ -30,14 +34,28 @@
             loading-text="Buscando os pacientes..."
             @dblclick:row="clickRow"
           >
+            <v-alert v-if="success" type="success">{{ successMessage }}</v-alert>
+            <v-alert v-if="error" type="error">{{ errorMessage }}</v-alert>
             <template v-slot:item.actions="{ item }">
               <v-icon small class="mr-2" @click="editMode(item)">mdi-pencil</v-icon>
-              <v-icon small @click="deletePatient(item)">mdi-delete</v-icon>
+              <v-icon small @click="deletePatient(item.id)">mdi-delete</v-icon>
             </template>
           </v-data-table>
         </v-card>
       </v-col>
     </v-row>
+    <v-snackbar v-model="success" color="success" :timeout="7500" elevation="3" top right>
+      {{ successMessage }}
+      <template v-slot:action="{ attrs }">
+        <v-btn color="white" text v-bind="attrs" @click="success = false">Fechar</v-btn>
+      </template>
+    </v-snackbar>
+    <v-snackbar v-model="error" color="error" :timeout="7500" elevation="3" top right>
+      {{ errorMessage }}
+      <template v-slot:action="{ attrs }">
+        <v-btn color="white" text v-bind="attrs" @click="error = false">Fechar</v-btn>
+      </template>
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -55,6 +73,10 @@ export default {
       search: "",
       loading: false,
       editing: false,
+      success: false,
+      successMessage: "",
+      error: false,
+      errorMessage: "",
       editingPatient: {},
       patientObj: {
         id: null,
@@ -83,30 +105,41 @@ export default {
   methods: {
     async getPatients() {
       this.loading = true;
+
+      let errorMessage = "Não foi possível buscar os pacientes 😞";
+
       try {
         const response = await fetch(
           "https://jsonplaceholder.typicode.com/users"
         );
-        const data = await response.json();
 
-        for (var key in data) {
-          this.patients = [
-            ...this.patients,
-            {
-              id: data[key].id,
-              name: data[key].name,
-              cpf: "000.000.000-00",
-              birth: "05/07/1992",
-              phone: data[key].phone,
-              appointed_by: "",
-            },
-          ];
+        if (response.ok) {
+          const data = await response.json();
+
+          for (var key in data) {
+            this.patients = [
+              ...this.patients,
+              {
+                id: data[key].id,
+                name: data[key].name,
+                cpf: "000.000.000-00",
+                birth: "05/07/1992",
+                phone: data[key].phone,
+                appointed_by: "",
+              },
+            ];
+          }
+        } else {
+          this.errorMessage = errorMessage;
+          this.error = true;
         }
 
         this.loading = false;
       } catch (error) {
-        console.error(error);
         this.loading = false;
+
+        this.errorMessage = errorMessage;
+        this.error = true;
       }
     },
 
@@ -118,28 +151,46 @@ export default {
       this.editingPatient = Object.assign({}, patient);
       this.editing = true;
 
-      this.dialog = true;
+      this.$refs.patiengDialog.editing = true;
+      this.$refs.patiengDialog.show();
     },
 
-    pushPatient(patient) {
+    addPatient(patient) {
+      this.editing = true;
+      this.editPatient = patient;
       this.patients = [...this.patients, patient];
     },
 
-    async deletePatient(patient) {
-      console.log();
-      try {
-        await fetch(
-          `https://jsonplaceholder.typicode.com/users/${patient.id}`,
-          {
-            method: "DELETE",
-          }
-        );
+    editPatient(id, data) {
+      this.patients = this.patients.map((patient) =>
+        patient.id === id ? data : patient
+      );
+    },
 
-        this.patients = this.patients.filter(
-          (patient) => patient.id !== patient.id
-        );
+    setEditingPatient(patient) {
+      this.editingPatient = Object.assign({}, patient);
+    },
+
+    async deletePatient(id) {
+      let errorMessage = "Não foi possível remover o paciente 😞";
+
+      this.loading = true;
+      try {
+        await fetch(`https://jsonplaceholder.typicode.com/users/${id}`, {
+          method: "DELETE",
+        });
+
+        this.patients = this.patients.filter((patient) => patient.id !== id);
+        this.loading = false;
+
+        this.successMessage = "O usuário foi removido com sucesso 😁";
+        this.success = true;
       } catch (error) {
         console.error(error);
+        this.loading = false;
+
+        this.errorMessage = errorMessage;
+        this.error = true;
       }
     },
 

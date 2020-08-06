@@ -70,8 +70,8 @@ export default {
     return {
       patientTabs: null,
       dialog: false,
-      loading: false,
       editing: false,
+      loading: false,
       error: false,
       errorMessage: "",
       success: false,
@@ -94,17 +94,22 @@ export default {
       this.error = false;
       this.errorMessage = "";
 
-      this.patient = Object.assign({}, this.patientObj);
-      this.editing = false;
-      console.log(this.patient);
       this.dialog = false;
+
+      this.editing = false;
+
+      this.$emit("set:editing-patient", this.patientObj);
+    },
+
+    show() {
+      this.dialog = true;
     },
 
     async createPatient(newPatient) {
       this.success = false;
       this.successMessage = "";
 
-      this.showSaveLoading = true;
+      this.loading = true;
 
       try {
         const response = await fetch(
@@ -118,16 +123,21 @@ export default {
 
         const data = await response.json();
 
+        this.loading = false;
         this.success = true;
-        this.successMessage = "Paciente criado com sucesso!";
+        this.successMessage = "Paciente criado com sucesso 😁";
 
         this.patient.id = data.id;
         this.editing = true;
 
-        this.showSaveLoading = false;
-
-        this.$emit("push:patient", data);
+        this.$emit("add:patient", data);
       } catch (error) {
+        this.loading = false;
+
+        this.error = true;
+        this.errorMessage = "Não foi possível criar o paciente 😞";
+        this.$emit("set:editing-patient", this.patientObj);
+
         console.error(error);
       }
     },
@@ -136,7 +146,7 @@ export default {
       this.success = false;
       this.successMessage = "";
 
-      this.showSaveLoading = true;
+      this.loading = true;
 
       try {
         const response = await fetch(
@@ -150,15 +160,18 @@ export default {
 
         const data = await response.json();
 
-        this.patients = this.patients.map((patient) =>
-          patient.id === id ? data : patient
-        );
+        this.$emit("edit:patient", id, data);
 
+        this.loading = false;
         this.success = true;
-        this.successMessage = "Paciente salvo com sucesso!";
-
-        this.showSaveLoading = false;
+        this.successMessage = "Paciente salvo com sucesso 😁";
       } catch (error) {
+        this.loading = false;
+
+        this.error = true;
+        this.errorMessage = "Não foi possível alterar o paciente 😟";
+        this.$emit("set:editing-patient", this.patientObj);
+
         console.error(error);
       }
     },
