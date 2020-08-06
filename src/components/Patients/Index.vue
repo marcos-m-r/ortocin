@@ -15,77 +15,11 @@
             ></v-text-field>
             <v-spacer></v-spacer>
 
-            <v-dialog v-model="dialog" persistent max-width="600px">
-              <template v-slot:activator="{ on, attrs }">
-                <v-btn color="primary" dark class="mb-2" v-bind="attrs" v-on="on">
-                  <v-icon small>mdi-face</v-icon>
-                  <span class="patient-icon-text">Novo Paciente</span>
-                </v-btn>
-              </template>
-              <v-card>
-                <v-card-title>
-                  <span class="headline">
-                    <v-icon big color="primary">mdi-face</v-icon>
-                    <span v-if="!editing" class="patient-icon-text">Cadastrar Paciente</span>
-                    <span v-else class="patient-icon-text">Paciente</span>
-                  </span>
-                </v-card-title>
-                <v-card-text>
-                  <v-tabs v-model="patientTabs">
-                    <v-tab>Cadastro</v-tab>
-                    <v-tab :disabled="!editing">Ficha de Evolução</v-tab>
-                  </v-tabs>
-                  <v-tabs-items v-model="patientTabs">
-                    <v-tab-item>
-                      <v-container>
-                        <v-progress-linear v-if="showSaveLoading" indeterminate color="primary"></v-progress-linear>
-                        <v-alert v-if="success" type="success">{{ successMessage }}</v-alert>
-                        <v-alert v-if="error" type="error">{{ errorMessage }}</v-alert>
-                        <v-row>
-                          <v-col cols="12">
-                            <v-text-field
-                              label="Nome Completo"
-                              v-model="editingPatient.name"
-                              required
-                            ></v-text-field>
-                          </v-col>
-                          <v-col cols="12">
-                            <v-text-field label="CPF" v-model="editingPatient.cpf" required></v-text-field>
-                          </v-col>
-                          <v-col cols="12">
-                            <v-text-field
-                              label="Data de Nascimento"
-                              v-model="editingPatient.birth"
-                              required
-                            ></v-text-field>
-                          </v-col>
-                          <v-col cols="12">
-                            <v-text-field label="Telefone" v-model="editingPatient.phone" required></v-text-field>
-                          </v-col>
-                          <v-col cols="12">
-                            <v-text-field
-                              label="Indicado Por"
-                              v-model="editingPatient.appointed_by"
-                              required
-                            ></v-text-field>
-                          </v-col>
-                        </v-row>
-                      </v-container>
-                    </v-tab-item>
-                    <v-tab-item></v-tab-item>
-                  </v-tabs-items>
-                </v-card-text>
-                <v-card-actions>
-                  <v-spacer></v-spacer>
-                  <v-btn color="red darken-1" text @click="closeDialog()">Fechar</v-btn>
-                  <v-btn
-                    color="primary darken-1"
-                    text
-                    @click="editing ? editPatient(editingPatient.id, editingPatient) : createPatient(editingPatient)"
-                  >Salvar</v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-dialog>
+            <patient-dialog
+              :patient="editingPatient"
+              :patients="patients"
+              @push:patient="pushPatient"
+            />
           </v-card-title>
           <v-data-table
             class="elevation-1"
@@ -108,22 +42,20 @@
 </template>
 
 <script>
+import PatientDialog from "@/components/Patients/PatientDialog.vue";
+
 export default {
   name: "patients-index",
+  components: {
+    PatientDialog,
+  },
   data() {
     return {
-      patientTabs: null,
-      dialog: false,
       patients: [],
       search: "",
       loading: false,
       editing: false,
       editingPatient: {},
-      error: false,
-      errorMessage: "",
-      success: false,
-      successMessage: "",
-      showSaveLoading: false,
       patientObj: {
         id: null,
         name: "",
@@ -189,67 +121,8 @@ export default {
       this.dialog = true;
     },
 
-    async createPatient(newPatient) {
-      this.success = false;
-      this.successMessage = "";
-
-      this.showSaveLoading = true;
-
-      try {
-        const response = await fetch(
-          "https://jsonplaceholder.typicode.com/users",
-          {
-            method: "POST",
-            body: JSON.stringify(newPatient),
-            headers: { "Content-type": "application/json; charset=UTF-8" },
-          }
-        );
-
-        const data = await response.json();
-
-        this.patients = [...this.patients, data];
-
-        this.success = true;
-        this.successMessage = "Paciente criado com sucesso!";
-
-        this.editingPatient.id = data.id;
-        this.editing = true;
-
-        this.showSaveLoading = false;
-      } catch (error) {
-        console.error(error);
-      }
-    },
-
-    async editPatient(id, editingPatient) {
-      this.success = false;
-      this.successMessage = "";
-
-      this.showSaveLoading = true;
-
-      try {
-        const response = await fetch(
-          `https://jsonplaceholder.typicode.com/users/${id}`,
-          {
-            method: "PUT",
-            body: JSON.stringify(editingPatient),
-            headers: { "Content-type": "application/json; charset=UTF-8" },
-          }
-        );
-
-        const data = await response.json();
-
-        this.patients = this.patients.map((patient) =>
-          patient.id === id ? data : patient
-        );
-
-        this.success = true;
-        this.successMessage = "Paciente salvo com sucesso!";
-
-        this.showSaveLoading = false;
-      } catch (error) {
-        console.error(error);
-      }
+    pushPatient(patient) {
+      this.patients = [...this.patients, patient];
     },
 
     async deletePatient(patient) {
@@ -292,6 +165,6 @@ export default {
 }
 
 .headline {
-  color: #BA68C8 !important;
+  color: #ba68c8 !important;
 }
 </style>
